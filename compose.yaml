@@ -1,0 +1,46 @@
+services:
+  tree-view-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount source for development
+      - ./:/app
+      # Don't override Python modules
+      - /app/.venv/
+      # Mount coverage reports separately
+      - htmlcov:/app/htmlcov
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    ports:
+      - "8000:8000"
+    mem_limit: 512m
+    cpus: 0.5
+    security_opt:
+      - no-new-privileges:true
+    user: appuser
+    working_dir: /app/htmlcov
+    entrypoint: ["python", "-m", "http.server", "8000"]
+    depends_on:
+      - dev
+
+  # Development service
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+      - /app/.venv/
+      - htmlcov:/app/htmlcov
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    security_opt:
+      - no-new-privileges:true
+    user: appuser
+    command: ["task", "test"]
+
+volumes:
+  htmlcov:
